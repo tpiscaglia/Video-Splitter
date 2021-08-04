@@ -19,9 +19,29 @@ namespace VideoSplitter.Services
         public async Task SplitVideoAsync(Clip clip, string file, string outputDir)
         {
             IConversion conversion = await FFmpeg.Conversions.FromSnippet.Split(file, Path.Combine(outputDir, clip.Name), clip.Start, clip.Duration);
-            conversion.SetVideoBitrate(FFmpeg.GetMediaInfo(file).Result.VideoStreams.First().Bitrate);
-            conversion.SetAudioBitrate(FFmpeg.GetMediaInfo(file).Result.AudioStreams.First().Bitrate);
+
+            conversion = SetBitrates(conversion, clip, file);
+
             IConversionResult result = await conversion.Start();
+        }
+
+        private IConversion SetBitrates(IConversion conversion, Clip clip, string file)
+        {
+            long videoBitrate;
+            long audioBitrate;
+            
+            videoBitrate = clip.VideoBitrate <= 0 ? 
+                FFmpeg.GetMediaInfo(file).Result.VideoStreams.First().Bitrate : 
+                clip.VideoBitrate;
+
+            audioBitrate = clip.AudioBitrate <= 0 ?
+                FFmpeg.GetMediaInfo(file).Result.AudioStreams.First().Bitrate :
+                clip.AudioBitrate;
+
+            conversion.SetVideoBitrate(videoBitrate);
+            conversion.SetAudioBitrate(audioBitrate);
+
+            return conversion;
         }
     }
 }
