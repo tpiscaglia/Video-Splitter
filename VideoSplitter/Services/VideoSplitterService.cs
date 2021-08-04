@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 
@@ -75,9 +76,16 @@ namespace VideoSplitter.Services
 
             foreach (var clip in splitInfo.clips)
             {
-                Console.WriteLine($"Splitting clip {splitInfo.clips.IndexOf(clip) + 1} of {splitInfo.clips.Count}.");
+                Stopwatch stopwatch = new Stopwatch();
+                stopwatch.Start();
+
+                Console.WriteLine($"{DateTime.Now} - Splitting clip {splitInfo.clips.IndexOf(clip) + 1} of {splitInfo.clips.Count}.");
 
                 service.SplitVideoAsync(clip, splitInfo.input, splitInfo.output).Wait();
+                stopwatch.Stop();
+
+                Console.WriteLine($"{DateTime.Now} - Finished splitting clip {splitInfo.clips.IndexOf(clip) + 1} of of {splitInfo.clips.Count}.");
+                Console.WriteLine($"Clip took {stopwatch.Elapsed} to split.");
             }
         }
 
