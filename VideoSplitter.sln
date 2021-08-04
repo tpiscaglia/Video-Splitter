@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31424.327
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoSplitter", "VideoSplitter\VideoSplitter.csproj", "{2507B646-0DB9-4A51-815A-8093A0D54D82}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2507B646-0DB9-4A51-815A-8093A0D54D82}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2507B646-0DB9-4A51-815A-8093A0D54D82}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2507B646-0DB9-4A51-815A-8093A0D54D82}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2507B646-0DB9-4A51-815A-8093A0D54D82}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {02060098-C022-4CF3-BB29-BF52D92F9E91}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "VideoSplitter": {
+      "commandName": "Project",
+      "commandLineArgs": "split -j \"C:\\clips.json\" -m json"
+    }
+  }
+}
