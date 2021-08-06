@@ -15,7 +15,7 @@ namespace VideoSplitter.Services
             _ffmpegService = ffmpegService;
         }
 
-        public void HandleTimeBasedSplitting(string file, string outputDir, long timeInterval)
+        public void HandleTimeBasedSplitting(string file, string outputPath, long timeInterval)
         {
             CheckFileExists(file);
 
@@ -24,23 +24,44 @@ namespace VideoSplitter.Services
                 Console.WriteLine("Interval parameter is required when using the time base split method.");
                 return;
             }
-            if (string.IsNullOrEmpty(outputDir))
+            if (string.IsNullOrEmpty(outputPath))
             {
                 Console.WriteLine("Output parameter is required when using the time based split method.");
                 return;
             }
-            if (!Directory.Exists(outputDir))
+
+            CheckFolderExists(outputPath);
+
+            TimeSpan videoLength = _ffmpegService.GetVideoLength(file);
+            SplitInfo splitInfo = new SplitInfo() { input = file, output = outputPath };
+
+            for (long i = 0; i < videoLength.TotalSeconds; i = i + timeInterval)
             {
-                //TODO: Maybe just create the directory instead of erroring if it doesn't exist?
-                Console.WriteLine("Output directory does not exist");
-                return;
+                long fileNumber = i / timeInterval + 1;
+                string fileName = Path.GetFileName(file) + fileNumber;
+                TimeSpan startTime = TimeSpan.FromSeconds(i);
+                TimeSpan endTime = TimeSpan.FromSeconds(i + timeInterval);
+
+                if (endTime > videoLength)
+                {
+                    endTime = videoLength;
+                }
+
+                Clip clip = new Clip()
+                {
+                    Start = startTime,
+                    End = endTime,
+                    Mode = Mode.time,
+                    Name = fileName
+                };
+
+                splitInfo.clips.Add(clip);
             }
 
-            //Do time based splitting
-            Console.WriteLine("Time based splitting is not supported at this time.");
+            SplitIntoClips(splitInfo);
         }
 
-        public void HandleFrameBasedSplitting(string file, string outputDir, long frameInterval)
+        public void HandleFrameBasedSplitting(string file, string outputPath, long frameInterval)
         {
             CheckFileExists(file);
 
@@ -49,12 +70,12 @@ namespace VideoSplitter.Services
                 Console.WriteLine("Interval parameter is required when using the frame base split method.");
                 return;
             }
-            if (string.IsNullOrEmpty(outputDir))
+            if (string.IsNullOrEmpty(outputPath))
             {
                 Console.WriteLine("Output parameter is required when using the frame based split method.");
                 return;
             }
-            if (!Directory.Exists(outputDir))
+            if (!Directory.Exists(outputPath))
             {
                 //TODO: Maybe just create the directory instead of erroring if it doesn't exist?
                 Console.WriteLine("Output directory does not exist");
@@ -71,8 +92,17 @@ namespace VideoSplitter.Services
 
             SplitInfo splitInfo = GetSplitInfoFromJson(jsonPath);
 
-            FfmpegService service = new FfmpegService();
+            SplitIntoClips(splitInfo);
+        }
 
+        private SplitInfo GetSplitInfoFromJson(string jsonPath)
+        {
+            return Newtonsoft.Json.JsonConvert.DeserializeObject<SplitInfo>(File.ReadAllText(jsonPath));
+        }
+
+        private void SplitIntoClips(SplitInfo splitInfo)
+        {
+            FfmpegService service = new FfmpegService();
 
             foreach (var clip in splitInfo.clips)
             {
@@ -89,17 +119,19 @@ namespace VideoSplitter.Services
             }
         }
 
-        private SplitInfo GetSplitInfoFromJson(string jsonPath)
+        private void CheckFolderExists(string path)
         {
-            return Newtonsoft.Json.JsonConvert.DeserializeObject<SplitInfo>(File.ReadAllText(jsonPath));
+            if (!Directory.Exists(path))
+            {
+                Console.WriteLine($"Folder {path} does not exist.");
+            }
         }
 
-        private void CheckFileExists(string FilePath)
+        private void CheckFileExists(string filePath)
         {
-            if (!File.Exists(FilePath))
+            if (!File.Exists(filePath))
             {
                 Console.WriteLine("File does not exist.");
-                return;
             }
         }
     }

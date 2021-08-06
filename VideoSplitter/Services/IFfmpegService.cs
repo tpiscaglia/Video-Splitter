@@ -7,6 +7,9 @@ namespace VideoSplitter.Services
 {
     public interface IFfmpegService
     {
-        public Task SplitVideoAsync(Clip clip, string file, string outputDir);
+        public Task SplitVideoAsync(Clip clip, string filePath, string outputDir);
+        public TimeSpan GetVideoLength(string filePath);
+        public long GetVideoBitrate(string filePath);
+        public long GetAudioBitrate(string filePath);
     }
 }
