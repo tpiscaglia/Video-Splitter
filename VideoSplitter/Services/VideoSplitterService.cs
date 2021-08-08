@@ -15,9 +15,9 @@ namespace VideoSplitter.Services
             _ffmpegService = ffmpegService;
         }
 
-        public void HandleTimeBasedSplitting(string file, string outputPath, long timeInterval)
+        public void HandleTimeBasedSplitting(string filePath, string outputPath, long timeInterval)
         {
-            CheckFileExists(file);
+            CheckFileExists(filePath);
 
             if (timeInterval <= 0)
             {
@@ -32,13 +32,13 @@ namespace VideoSplitter.Services
 
             CheckFolderExists(outputPath);
 
-            TimeSpan videoLength = _ffmpegService.GetVideoLength(file);
-            SplitInfo splitInfo = new SplitInfo() { input = file, output = outputPath };
+            TimeSpan videoLength = _ffmpegService.GetVideoLength(filePath);
+            SplitInfo splitInfo = new SplitInfo() { input = filePath, output = outputPath };
 
             for (long i = 0; i < videoLength.TotalSeconds; i = i + timeInterval)
             {
                 long fileNumber = i / timeInterval + 1;
-                string fileName = Path.GetFileName(file) + fileNumber;
+                string fileName = Path.GetFileName(filePath) + fileNumber;
                 TimeSpan startTime = TimeSpan.FromSeconds(i);
                 TimeSpan endTime = TimeSpan.FromSeconds(i + timeInterval);
 
@@ -61,29 +61,51 @@ namespace VideoSplitter.Services
             SplitIntoClips(splitInfo);
         }
 
-        public void HandleFrameBasedSplitting(string file, string outputPath, long frameInterval)
+        public void HandleFrameBasedSplitting(string filePath, string outputPath, long frameInterval)
         {
-            CheckFileExists(file);
+            CheckFileExists(filePath);
+            CheckFolderExists(outputPath);
 
             if (frameInterval <= 0)
             {
                 Console.WriteLine("Interval parameter is required when using the frame base split method.");
                 return;
             }
-            if (string.IsNullOrEmpty(outputPath))
+
+            //UNFORMATUNATELY FFMPEG DOESN'T ALLOW SPLITTING AT A FRAME LEVEL
+            //SO THIS IS THE LOGIC I CAME UP WITH TO GET AROUND THAT
+            //THIS LOGIC NEEDS VALIDATED
+            SplitInfo splitInfo = new SplitInfo() { input = filePath, output = outputPath };
+            double totalFrames = _ffmpegService.GetVideoTotalFrameCount(filePath);
+            double frameRate = _ffmpegService.GetVideoFrameRate(filePath);
+            double frame = 0;
+            string fileName = Path.GetFileName(filePath);
+            int clipNumber = 1;
+
+            while (frame < totalFrames)
             {
-                Console.WriteLine("Output parameter is required when using the frame based split method.");
-                return;
-            }
-            if (!Directory.Exists(outputPath))
-            {
-                //TODO: Maybe just create the directory instead of erroring if it doesn't exist?
-                Console.WriteLine("Output directory does not exist");
-                return;
+                if (frame + frameInterval > totalFrames)
+                {
+                    frame = totalFrames;
+                }
+
+                TimeSpan start = GetTimeSpanFromFrames(frame, frameRate);
+                TimeSpan end = GetTimeSpanFromFrames(frame + frameInterval, frameRate);
+
+                Clip clip = new Clip()
+                {
+                    Mode = Mode.frame,
+                    Start = start,
+                    End = end,
+                    Name = fileName + clipNumber
+                };
+
+                splitInfo.clips.Add(clip);
+                clipNumber++;
+                frame += frameInterval;
             }
 
-            //Do time based splitting
-            Console.WriteLine("Frame based splitting is not supported at this time");
+            SplitIntoClips(splitInfo);
         }
 
         public void HandlejsonBasedSplitting(string jsonPath)
@@ -117,6 +139,11 @@ namespace VideoSplitter.Services
                 Console.WriteLine($"{DateTime.Now} - Finished splitting clip {splitInfo.clips.IndexOf(clip) + 1} of of {splitInfo.clips.Count}.");
                 Console.WriteLine($"Clip took {stopwatch.Elapsed} to split.");
             }
+        }
+
+        private TimeSpan GetTimeSpanFromFrames(double frame, double frameRate)
+        {
+            return TimeSpan.FromSeconds(frame / frameRate);
         }
 
         private void CheckFolderExists(string path)

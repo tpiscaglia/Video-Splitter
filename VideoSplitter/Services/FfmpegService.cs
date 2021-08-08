@@ -30,6 +30,19 @@ namespace VideoSplitter.Services
             return FFmpeg.GetMediaInfo(filePath).Result.Duration;
         }
 
+        public double GetVideoFrameRate(string filePath)
+        {
+            return FFmpeg.GetMediaInfo(filePath).Result.VideoStreams.First().Framerate;
+        }
+
+        public double GetVideoTotalFrameCount(string filePath)
+        {
+            double frameRate = GetVideoFrameRate(filePath);
+            double vidLength = GetVideoLength(filePath).TotalSeconds;
+
+            return frameRate * vidLength;
+        }
+
         public long GetVideoBitrate(string filePath)
         {
             return FFmpeg.GetMediaInfo(filePath).Result.VideoStreams.First().Bitrate;
